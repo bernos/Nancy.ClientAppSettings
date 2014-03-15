@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Runtime.CompilerServices;
 using Nancy.Bootstrapper;
 using Newtonsoft.Json;
 
@@ -12,21 +13,26 @@ namespace Nancy.ClientAppSettings
 
         public static ClientAppSettings Enable(IPipelines pipelines)
         {
-            var settings = new ClientAppSettings();
+            var appSettings = new ClientAppSettings();
 
             pipelines.BeforeRequest.AddItemToEndOfPipeline(ctx =>
             {
-                ctx.Items[ContextKey] = settings;
+                ctx.Items[ContextKey] = new ClientAppSettings(appSettings);
                 return null;
             });
 
-            return settings;
+            return appSettings;
         }
 
         private readonly IDictionary<string, object> _settings;
         private readonly IList<Func<NancyContext, IDictionary<string, object>>> _appenders;
-        
+        private readonly ClientAppSettings _parent;
         public string VariableName { get; set; }
+
+        public ClientAppSettings(ClientAppSettings parent) : this()
+        {
+            _parent = parent;
+        }
 
         public ClientAppSettings()
         {
@@ -88,14 +94,26 @@ namespace Nancy.ClientAppSettings
             return this;
         }
 
-        public string ToJson(NancyContext context)
+        public IDictionary<string, object> ToDictionary(NancyContext context)
         {
+            var settings = (_parent == null) ? new Dictionary<string, object>() : new Dictionary<string, object>(_parent.ToDictionary(context));    
+         
             foreach (var appender in _appenders)
             {
                 Append(appender(context));
             }
 
-            return JsonConvert.SerializeObject(_settings);
+            foreach (var kvp in _settings)
+            {
+                settings[kvp.Key] = kvp.Value;
+            }
+
+            return settings;
+        }  
+
+        public string ToJson(NancyContext context)
+        {
+            return JsonConvert.SerializeObject(ToDictionary(context));
         }
     }
 }
