@@ -9,11 +9,15 @@ Provides a simple API that makes sharing configuration data between your Nancy a
 
 With Nuget
 
-	Install-Package Nancy.ClientAppSettings
+```
+Install-Package Nancy.ClientAppSettings
+```
 
 Normally you will want to install this package as a dependency for the Nancy.ClientAppSettings.Razor package, which adds HtmlHelper extensions to actually expose settings in your views.
 
-	Install-Package Nancy.ClientAppSettings.Razor
+```
+Install-Package Nancy.ClientAppSettings.Razor
+```
 
 ## Usage
 
@@ -21,13 +25,14 @@ Normally you will want to install this package as a dependency for the Nancy.Cli
 
 Enable Nancy.ClientAppSettings in your application bootstrappers ApplicationStartup method
 
-	:::c#
-	protected override void ApplicationStartup(Nancy.TinyIoc.TinyIoCContainer container, Nancy.Bootstrapper.IPipelines pipelines)
-	{
-		base.ApplicationStartup(container, pipelines);
-            
-		ClientAppSettings.Enable(pipelines);
-	}
+```csharp
+protected override void ApplicationStartup(Nancy.TinyIoc.TinyIoCContainer container, Nancy.Bootstrapper.IPipelines pipelines)
+{
+	base.ApplicationStartup(container, pipelines);
+        
+	ClientAppSettings.Enable(pipelines);
+}
+```
 
 The Enable method returns an instance of the ClientAppSettings object, which you can further configure in your bootstrapper. Read on...
 
@@ -35,57 +40,63 @@ The Enable method returns an instance of the ClientAppSettings object, which you
 
 You can easily retrieve the ClientAppSettings object using the GetClientAppSettings extension method added to NancyContext. 
 
-	:::c#
-	var settings = Context.GetClientAppSettings();
+```csharp
+var settings = Context.GetClientAppSettings();
+```
 
 ### Providing access to Web.config app settings to javascript
 
 You can easily push appsettings from your web.config file down to javascript using the fluent api. For example, in your bootstrapper...
 
-	:::c#
-	protected override void ApplicationStartup(Nancy.TinyIoc.TinyIoCContainer container, Nancy.Bootstrapper.IPipelines pipelines)
-	{
-		base.ApplicationStartup(container, pipelines);
-            
-		ClientAppSettings.Enable(pipelines).WithAppSettings("MyAppSettingOne", "MyOtherAppSetting" ...);
-	}
+```csharp
+protected override void ApplicationStartup(Nancy.TinyIoc.TinyIoCContainer container, Nancy.Bootstrapper.IPipelines pipelines)
+{
+	base.ApplicationStartup(container, pipelines);
+        
+	ClientAppSettings.Enable(pipelines).WithAppSettings("MyAppSettingOne", "MyOtherAppSetting" ...);
+}
+```
 
 Or from within a route handler in a Nancy Module
 
-	:::c#
-	public MyModule : NancyModule {
-		
-		Get["/"] = _ => {
+```csharp
+public MyModule : NancyModule {
+	
+	Get["/"] = _ => {
 
-			Context.GetClientAppSettings().WithAppSettings("SomeSetting");
+		Context.GetClientAppSettings().WithAppSettings("SomeSetting");
 
-			//...
-		};
-	}
+		//...
+	};
+}
+```
 
 ### Setting and appending static and dynamic app settings
 
 You can easily set a single app setting 
 
-	:::c#
-	Context.GetClientAppSettings().Set("MySetting", "MyValue");
+```csharp
+Context.GetClientAppSettings().Set("MySetting", "MyValue");
+```
 
 Or append multiple settings using the Append(IDictionary<string, object> settings) method
 
-	:::c#
-	Context.GetClientAppSettings().Append(new Dictionary<string, object> {
-		{ "SettingOne" , 1 },
-		{ "SettingTwo", 2 }
-	});
+```csharp
+Context.GetClientAppSettings().Append(new Dictionary<string, object> {
+	{ "SettingOne" , 1 },
+	{ "SettingTwo", 2 }
+});
+```
 
 You can also append dynamic values that can be calculated at runtime, using the Append(Func<NancyContext, IDictionary<string, object>> appenderFunc) overload. The appenderFunc will not be evaluated until the ClientAppSettings object is serialized, usually during view rendering
 
-	:::c#
-	Context.GetClientAppSettings().Append(context => {
-		return new Dictionary<string, object> {
-			{ "CurrentUser", context.CurrentUser } 
-		};
-	});
+```csharp
+Context.GetClientAppSettings().Append(context => {
+	return new Dictionary<string, object> {
+		{ "CurrentUser", context.CurrentUser } 
+	};
+});
+```
 
 ### Outputting settings in your views 
 
@@ -95,27 +106,31 @@ This package will add some HtmlHelper extensions to make it easy to output your 
 
 The simplest method is via
 
-	@Html.RenderClientAppSettings()
+```csharp
+@Html.RenderClientAppSettings()
+```
 
-This will render out the javasript app settings as well as enclosing <script> element:
+This will render out the javasript app settings as well as enclosing `<script>` element:
 
-	:::html
-	<script>
-		var Settings = {
-			"SettingOne" : "ValueOne",
-			"SettingTwo" : "ValueTwo"
-			//...
-		};
-	</script>
+```html
+<script>
+	var Settings = {
+		"SettingOne" : "ValueOne",
+		"SettingTwo" : "ValueTwo"
+		//...
+	};
+</script>
+```
 
 By default app settings are output as a global variable named "Settings". You can easily change the name of the javascript variable using the WithVariableName() method in your bootstrapper
 
-	:::c#
-	protected override void ApplicationStartup(Nancy.TinyIoc.TinyIoCContainer container, Nancy.Bootstrapper.IPipelines pipelines)
-	{
-		base.ApplicationStartup(container, pipelines);
-            
-		ClientAppSettings.Enable(pipelines)
-			.WithVariableName("AppSettings")
-			.WithAppSettings("MyAppSettingOne", "MyOtherAppSetting" ...);
-	}
+```csharp
+protected override void ApplicationStartup(Nancy.TinyIoc.TinyIoCContainer container, Nancy.Bootstrapper.IPipelines pipelines)
+{
+	base.ApplicationStartup(container, pipelines);
+        
+	ClientAppSettings.Enable(pipelines)
+		.WithVariableName("AppSettings")
+		.WithAppSettings("MyAppSettingOne", "MyOtherAppSetting" ...);
+}
+```
